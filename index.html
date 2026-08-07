@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语言学习倒计时</title>
+<style>
+:root { --bg: #f6f7f9; --ink: #1a2332; --muted: #68758a; --line: #e2e6ec; --accent: #2f6f4f; --accent-soft: #e3efe8; --amber: #b07818; --amber-soft: #f7efe2; --card: #ffffff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px 18px 64px; }
+.tabs { display: flex; gap: 8px; }
+.tab { padding: 9px 22px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; }
+.tab.active.en { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tab.active.jp { background: var(--amber); border-color: var(--amber); color: #fff; }
+.page-head { margin-top: 18px; }
+.page-head h1 { font-size: 20px; font-weight: 700; letter-spacing: 0; }
+.page-head p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.counter { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 24px; text-align: center; }
+.counter .num { font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.counter .num small { font-size: 20px; font-weight: 600; color: var(--muted); }
+.counter .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.page.en .counter .sub strong { color: var(--accent); }
+.page.jp .counter .sub strong { color: var(--amber); }
+.progress-zone { margin-top: 18px; }
+.bar { position: relative; height: 14px; background: var(--line); border-radius: 7px; overflow: visible; }
+.bar .fill { height: 100%; border-radius: 7px; transition: width .4s ease; }
+.page.en .bar .fill { background: var(--accent); }
+.page.jp .bar .fill { background: var(--amber); }
+.bar .tick { position: absolute; top: -4px; width: 2px; height: 22px; background: #fff; outline: 1px solid #c9cfd8; }
+.bar-labels { position: relative; height: 18px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.bar-labels span { position: absolute; transform: translateX(-50%); }
+.entry { margin-top: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+.entry h2, .log h2, .milestones h2, .plan h2, .why h2, .activity h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.form-row > * { font: inherit; }
+input, select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; background: #fff; color: var(--ink); }
+select { max-width: 110px; }
+input[type=number] { width: 100px; }
+input[type=date] { flex: 1; min-width: 120px; }
+.btn { padding: 9px 18px; border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+.page.en .btn { background: var(--accent); }
+.page.jp .btn { background: var(--amber); }
+.btn:active { opacity: .85; }
+.quick { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.quick button { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--muted); font-size: 12px; cursor: pointer; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.stat .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.activity { margin-top: 24px; }
+.act-bar-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.act-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.act-item + .act-item { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.act-item .label { width: 60px; font-size: 13px; font-weight: 600; flex: none; }
+.act-item .mini-bar { flex: 1; height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; }
+.act-item .mini-bar .fill { height: 100%; border-radius: 6px; min-width: 0; transition: width .4s ease; }
+.page.en .act-item .mini-bar .fill { background: var(--accent); }
+.page.jp .act-item .mini-bar .fill { background: var(--amber); }
+.act-item .hours { width: 55px; text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 700; flex: none; }
+.act-item .pct { width: 36px; text-align: right; font-size: 12px; color: var(--muted); flex: none; }
+.plan, .why, .milestones, .log { margin-top: 24px; }
+.plan table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13px; }
+.plan th, .plan td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.plan th { background: #f0f2f5; font-size: 12px; color: var(--muted); font-weight: 600; }
+.plan tr:last-child td { border-bottom: none; }
+.plan td.min { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.plan td .note { color: var(--muted); font-size: 12px; display: block; }
+.why .box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 13px; }
+.why .box p + p { margin-top: 8px; }
+.why .box .em { font-weight: 700; }
+.ms { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+.ms .dot { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); margin-top: 2px; }
+.page.en .ms.done { border-color: var(--accent); background: var(--accent-soft); }
+.page.en .ms.done .dot { background: var(--accent); border-color: var(--accent); }
+.page.jp .ms.done { border-color: var(--amber); background: var(--amber-soft); }
+.page.jp .ms.done .dot { background: var(--amber); border-color: var(--amber); }
+.ms.done .dot::after { content: "\2713"; color: #fff; font-size: 12px; display: grid; place-items: center; height: 100%; }
+.ms .t { font-weight: 700; font-size: 14px; }
+.ms .d { font-size: 13px; color: var(--muted); }
+.ms .h { margin-left: auto; flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.log-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+.log-item .min { font-weight: 700; font-variant-numeric: tabular-nums; }
+.log-item .del { margin-left: auto; border: none; background: none; color: #b6bdc9; cursor: pointer; font-size: 15px; }
+.log-item .del:hover { color: #c0392b; }
+.empty { color: var(--muted); font-size: 13px; text-align: center; padding: 14px 0; }
+.danger { margin-top: 28px; text-align: center; }
+.danger button { background: none; border: none; color: #b6bdc9; font-size: 12px; cursor: pointer; text-decoration: underline; }
+.page { display: none; }
+.page.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab en active" data-page="en">英语</button>
+    <button class="tab jp" data-page="jp">日语</button>
+  </div>
+  <div class="page en show" id="page-en">
+    <div class="page-head"><h1>500 小时 · 流利英语倒计时</h1><p>倒数的不是天数，是剩余小时。不学习时它只是暂停，不产生负罪感。</p></div>
+    <div class="counter"><div class="num"><span class="remainH">500</span><small> 小时</small></div><div class="sub counterSub"></div></div>
+    <div class="progress-zone"><div class="bar"><div class="fill" style="width:0%"></div></div><div class="bar-labels"></div></div>
+    <div class="entry">
+      <h2>记一笔（英语）</h2>
+      <div class="form-row">
+        <input type="date" class="inDate">
+        <select class="inAct"></select>
+        <input type="number" class="inMin" min="1" max="600" placeholder="分钟">
+        <button class="btn btnAdd">入账</button>
+      </div>
+      <div class="quick"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v stDays">0</div><div class="k">学习天数</div></div>
+      <div class="stat"><div class="v stAvg">0</div><div class="k">日均分钟</div></div>
+      <div class="stat"><div class="v stStreak">0</div><div class="k">连续天数</div></div>
+      <div class="stat"><div class="v stEta">—</div><div class="k">预计完成日</div></div>
+    </div>
+    <div class="activity"><h2>项目时间分布</h2><div class="act-bar-wrap"></div></div>
+    <div class="plan">
+      <h2>推荐每日时间分配（合计 45 分钟；忙时只保 ★ 项）</h2>
+      <table><tr><th>项目</th><th>时长</th><th>做什么</th></tr>
+      <tr><td>精听 ★</td><td class="min">15-20 分钟</td><td>1-2 分钟材料四步法：盲听 → 逐句 → 对文本标记 → 跟读<span class="note">毕业标准：盲听一遍懂 95%</span></td></tr>
+      <tr><td>泛听</td><td class="min">10 分钟</td><td>听昨天精听毕业/进行中的材料，抓大意不求全懂</td></tr>
+      <tr><td>阅读</td><td class="min">10 分钟</td><td>925L 改写新闻一篇：第一遍不查词，第二遍对照注释<span class="note">材料问 Codex 要</span></td></tr>
+      <tr><td>复述 ★</td><td class="min">5 分钟</td><td>合上材料用英语说 3-5 句，卡住的词就是收词对象</td></tr>
+      <tr><td>Anki</td><td class="min">5 分钟</td><td>提取卡片复习：说句子，不是认单词</td></tr>
+      </table>
+    </div>
+    <div class="milestones"><h2>里程碑验收</h2><div class="msList"></div></div>
+    <div class="log"><h2>最近记录</h2><div class="logList"></div></div>
+  </div>
+  <div class="page jp" id="page-jp">
+    <div class="page-head"><h1>800 小时 · 日语流利倒计时</h1><p>从你现在的水平（N4-N3）到无字幕看影视 + 日常流利对话。</p></div>
+    <div class="counter"><div class="num"><span class="remainH">800</span><small> 小时</small></div><div class="sub counterSub"></div></div>
+    <div class="progress-zone"><div class="bar"><div class="fill" style="width:0%"></div></div><div class="bar-labels"></div></div>
+    <div class="entry">
+      <h2>记一笔（日语）</h2>
+      <div class="form-row">
+        <input type="date" class="inDate">
+        <select class="inAct"></select>
+        <input type="number" class="inMin" min="1" max="600" placeholder="分钟">
+        <button class="btn btnAdd">入账</button>
+      </div>
+      <div class="quick"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v stDays">0</div><div class="k">学习天数</div></div>
+      <div class="stat"><div class="v stAvg">0</div><div class="k">日均分钟</div></div>
+      <div class="stat"><div class="v stStreak">0</div><div class="k">连续天数</div></div>
+      <div class="stat"><div class="v stEta">—</div><div class="k">预计完成日</div></div>
+    </div>
+    <div class="activity"><h2>项目时间分布</h2><div class="act-bar-wrap"></div></div>
+    <div class="why">
+      <h2>为什么是 800 小时</h2>
+      <div class="box">
+        <p>美国外交学院（FSI）把日语列为英语母语者最难的语言之一，从零到工作流利约需 <span class="em">2200 小时</span>。但你是中文母语者：日语词汇约一半含汉字，阅读和词汇记忆有显著优势，主流估计可省下 <span class="em">30-40%</span> 的时间——对应 JLPT N1 约 1300-1500 小时（英语母语者需 3000+）。</p>
+        <p>听力口语不吃汉字红利，小时数省不掉，但你已经越过了最难的入门段：能简单日常表达、看字幕即懂，大致在 <span class="em">N4-N3</span>，相当于已投入约 300-500 小时。你的目标（无字幕影视 + 流利日常对话，约 N2 上段）对应总投入约 1100-1300 小时。</p>
+        <p><span class="em">所以剩余 ≈ 800 小时。</span>时间上：每天 30 分钟约需 4.5 年；每天 45 分钟约 3 年；每天 60 分钟约 2.2 年。日语现阶段是副项，建议每天 15-30 分钟保频率即可——它会慢慢涨，等英语到达舒适区后再提速。</p>
+      </div>
+    </div>
+    <div class="plan">
+      <h2>推荐每日时间分配（合计 15-30 分钟；忙时只保 ★ 项）</h2>
+      <table><tr><th>项目</th><th>时长</th><th>做什么</th></tr>
+      <tr><td>影视精听 ★</td><td class="min">10-15 分钟</td><td>看过的日剧/电影片段 1-3 分钟，四步法：盲听 → 逐句 → 对字幕 → 跟读<span class="note">重点收口语缩约形：〜ちゃう、なきゃ、とく 等</span></td></tr>
+      <tr><td>台词跟读 ★</td><td class="min">5 分钟</td><td>模仿刚精听过的片段，把地道表达搬进口语</td></tr>
+      <tr><td>复述</td><td class="min">5 分钟</td><td>用日语把片段剧情讲 3-5 句，卡住的表达收进 Anki</td></tr>
+      <tr><td>泛听（可选）</td><td class="min">5-10 分钟</td><td>背景放日剧/播客，保"每天接触"这条线</td></tr>
+      </table>
+    </div>
+    <div class="milestones"><h2>里程碑验收</h2><div class="msList"></div></div>
+    <div class="log"><h2>最近记录</h2><div class="logList"></div></div>
+  </div>
+  <div class="danger"><button id="btnReset">清空全部数据重新开始</button></div>
+</div>
+<script>
+const KEY = "lang_countdown_v2";
+const PAGES = {
+  en: {
+    totalMin: 500 * 60,
+    activities: [
+      { id: "listening", label: "精听" },
+      { id: "extensive", label: "泛听" },
+      { id: "reading", label: "阅读" },
+      { id: "retell", label: "复述" },
+      { id: "anki", label: "Anki" },
+    ],
+    milestones: [
+      { h: 100, t: "里程碑 1 · 慢速听清", d: "盲听慢速材料一遍懂 80%；就熟悉话题连续说 2 分钟" },
+      { h: 200, t: "里程碑 2 · 接近常速", d: "跟得上 6 Minute English；和人对话 10 分钟不冷场" },
+      { h: 300, t: "里程碑 3 · 常速门槛", d: "常速播客懂 70%；即兴聊工作话题 5 分钟" },
+      { h: 400, t: "里程碑 4 · 自我纠正", d: "看无字幕访谈懂大意；对话中能自我纠正而不是卡住" },
+      { h: 500, t: "终点 · 流利对话", d: "和母语者日常对话基本无障碍" },
+    ],
+  },
+  jp: {
+    totalMin: 800 * 60,
+    activities: [
+      { id: "movie-listening", label: "影视精听" },
+      { id: "line-repeat", label: "台词跟读" },
+      { id: "retell", label: "复述" },
+      { id: "extensive", label: "泛听" },
+    ],
+    milestones: [
+      { h: 200, t: "里程碑 1 · N3 巩固", d: "慢速日剧片段盲听懂 70%；日常话题连续说 3 分钟" },
+      { h: 400, t: "里程碑 2 · N2 水平", d: "常速日剧生活场景懂 60-70%；日常对话能持续不冷场" },
+      { h: 600, t: "里程碑 3 · 常速适应", d: "无字幕电影懂大意；口语不再只用简单词汇，能用中级表达" },
+      { h: 800, t: "终点 · 流利日常", d: "无字幕影视懂 80%+；和日本人日常对话基本无障碍" },
+    ],
+  },
+};
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+try {
+  const old = JSON.parse(localStorage.getItem("en500h_v1"));
+  if (old && old.length && !localStorage.getItem(KEY + "_migrated")) {
+    entries = entries.concat(old);
+    localStorage.setItem(KEY + "_migrated", "1");
+  }
+} catch (e) {}
+function save() { localStorage.setItem(KEY, JSON.stringify(entries)); }
+function fmtH(min) { const h = min / 60; return h >= 100 ? Math.round(h) : (Math.round(h * 10) / 10); }
+function renderPage(lang) {
+  const cfg = PAGES[lang];
+  const page = document.getElementById("page-" + lang);
+  const mine = entries.filter(e => e.lang === lang);
+  const done = mine.reduce((s, e) => s + e.min, 0);
+  const remain = Math.max(0, cfg.totalMin - done);
+  const pct = Math.min(100, done / cfg.totalMin * 100);
+  const totalH = cfg.totalMin / 60;
+  page.querySelector(".remainH").textContent = fmtH(remain);
+  page.querySelector(".counterSub").innerHTML = "已投入 <strong>" + done + "</strong> 分钟（" + fmtH(done) + " 小时） · 完成 " + pct.toFixed(1) + "%";
+  page.querySelector(".fill").style.width = pct + "%";
+  const bar = page.querySelector(".bar");
+  const labels = page.querySelector(".bar-labels");
+  bar.querySelectorAll(".tick").forEach(t => t.remove());
+  labels.innerHTML = "";
+  cfg.milestones.forEach(m => {
+    const left = (m.h / totalH * 100) + "%";
+    const tick = document.createElement("div");
+    tick.className = "tick"; tick.style.left = left;
+    bar.appendChild(tick);
+    const lab = document.createElement("span");
+    lab.style.left = left; lab.textContent = m.h + "h";
+    labels.appendChild(lab);
+  });
+  const days = new Set(mine.map(e => e.date));
+  page.querySelector(".stDays").textContent = days.size;
+  const avg = days.size ? done / days.size : 0;
+  page.querySelector(".stAvg").textContent = days.size ? Math.round(avg) : 0;
+  page.querySelector(".stStreak").textContent = streak(lang);
+  const etaEl = page.querySelector(".stEta");
+  if (avg > 0 && remain > 0) {
+    const eta = new Date(Date.now() + remain / avg * 864e5);
+    etaEl.textContent = eta.getFullYear() + "/" + (eta.getMonth() + 1) + "/" + eta.getDate();
+  } else {
+    etaEl.textContent = remain <= 0 ? "已达成" : "—";
+  }
+  page.querySelector(".msList").innerHTML = cfg.milestones.map(m => {
+    const ok = done >= m.h * 60;
+    return '<div class="ms' + (ok ? " done" : "") + '"><div class="dot"></div><div><div class="t">' + m.t + '</div><div class="d">' + m.d + '</div></div><div class="h">' + m.h + "h</div></div>";
+  }).join("");
+  const sorted = [...mine].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);
+  page.querySelector(".logList").innerHTML = sorted.length ? sorted.slice(0, 30).map(e =>
+    '<div class="log-item"><span>' + e.date + '</span><span class="min">' + e.min + ' 分钟</span><button class="del" data-ts="' + e.ts + '" title="删除">×</button></div>'
+  ).join("") : '<div class="empty">还没有记录，今天学 5 分钟也算入账。</div>';
+}
+function streak(lang) {
+  const days = new Set(entries.filter(e => e.lang === lang).map(e => e.date));
+  let n = 0;
+  const d = new Date();
+  const iso = x => x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+  if (!days.has(iso(d))) d.setDate(d.getDate() - 1);
+  while (days.has(iso(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function renderActivity(lang) {
+  const cfg = PAGES[lang];
+  const page = document.getElementById("page-" + lang);
+  const mine = entries.filter(e => e.lang === lang);
+  const total = mine.reduce((s, e) => s + e.min, 0) || 1;
+  const wrap = page.querySelector(".act-bar-wrap");
+  wrap.innerHTML = cfg.activities.map(a => {
+    const m = mine.filter(e => (e.activity || "uncategorized") === a.id);
+    const h = m.reduce((s, e) => s + e.min, 0) / 60;
+    const pct = h / (total / 60) * 100;
+    return '<div class="act-item"><div class="label">' + a.label + '</div><div class="mini-bar"><div class="fill" style="width:' + pct + '%"></div></div><div class="hours">' + fmtH(h * 60) + 'h</div><div class="pct">' + Math.round(pct) + '%</div></div>';
+  }).join("");
+  const unk = mine.filter(e => !e.activity);
+  if (unk.length) {
+    const uh = unk.reduce((s, e) => s + e.min, 0) / 60;
+    const upct = uh / (total / 60) * 100;
+    wrap.innerHTML += '<div class="act-item"><div class="label">未分类</div><div class="mini-bar"><div class="fill" style="width:' + upct + '%"></div></div><div class="hours">' + fmtH(uh * 60) + 'h</div><div class="pct">' + Math.round(upct) + '%</div></div>';
+  }
+}
+function render() { renderPage("en"); renderPage("jp"); renderActivity("en"); renderActivity("jp"); }
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("show"));
+    btn.classList.add("active");
+    document.getElementById("page-" + btn.dataset.page).classList.add("show");
+  };
+});
+["en", "jp"].forEach(function(lang) {
+  var page = document.getElementById("page-" + lang);
+  var cfg = PAGES[lang];
+  var inDate = page.querySelector(".inDate");
+  var inAct = page.querySelector(".inAct");
+  var inMin = page.querySelector(".inMin");
+  var btn = page.querySelector(".btnAdd");
+  var quick = page.querySelector(".quick");
+  inDate.valueAsDate = new Date();
+  cfg.activities.forEach(function(a) {
+    var opt = document.createElement("option");
+    opt.value = a.id; opt.textContent = a.label;
+    inAct.appendChild(opt);
+  });
+  function add(min) {
+    if (!inDate.value || !min || min <= 0) return;
+    entries.push({ date: inDate.value, min: min, lang: lang, activity: inAct.value, ts: Date.now() });
+    save(); render();
+    inMin.value = ""; inMin.focus();
+  }
+  btn.onclick = function() { add(parseInt(inMin.value, 10)); };
+  inMin.addEventListener("keydown", function(e) { if (e.key === "Enter") btn.click(); });
+  [15, 30, 45, 60].forEach(function(m) {
+    var b = document.createElement("button");
+    b.textContent = m + " 分钟";
+    b.onclick = function() { inMin.value = m; btn.click(); };
+    quick.appendChild(b);
+  });
+  page.querySelector(".logList").addEventListener("click", function(e) {
+    var ts = e.target.dataset && e.target.dataset.ts;
+    if (!ts) return;
+    entries = entries.filter(function(x) { return String(x.ts) !== ts; });
+    save(); render();
+  });
+});
+document.getElementById("btnReset").onclick = function() {
+  if (confirm("确定清空全部记录？此操作不可恢复。")) {
+    entries = []; save(); render();
+  }
+};
+render();
+</script>
+</body>
+</html>
