@@ -66,7 +66,29 @@
     .stat .v { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; }
     .stat .k { color:var(--muted); font-size:12px; }
     section { margin-top:25px; }
+    .section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+    .section-heading .summary { color:var(--muted); font-size:12px; }
     .section-card { padding:14px 16px; }
+    .heatmap-card { overflow:hidden; }
+    .heatmap-weekdays,.heatmap-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+    .heatmap-weekdays { margin-bottom:7px; color:var(--muted); font-size:11px; text-align:center; }
+    .heat-day { position:relative; min-height:58px; padding:7px; border:1px solid rgba(34,99,68,.08); border-radius:8px; color:#244031; background:#edf4ef; font-variant-numeric:tabular-nums; }
+    .heat-day.level-1 { background:#d5eadc; }
+    .heat-day.level-2 { background:#a9d4b8; }
+    .heat-day.level-3 { color:#123822; background:#73b78b; }
+    .heat-day.level-4 { color:#fff; background:#2f7d52; }
+    .heat-day.today { box-shadow:inset 0 0 0 2px var(--ink); }
+    .heat-day.future { opacity:.42; }
+    .heat-day.blank { visibility:hidden; }
+    .heat-date { font-size:12px; font-weight:750; }
+    .heat-min { position:absolute; right:7px; bottom:6px; font-size:10px; font-weight:700; }
+    .heat-legend { display:flex; align-items:center; justify-content:flex-end; gap:5px; margin-top:12px; color:var(--muted); font-size:11px; }
+    .legend-swatch { width:15px; height:15px; border:1px solid rgba(34,99,68,.08); border-radius:4px; }
+    .legend-swatch:nth-of-type(1) { background:#edf4ef; }
+    .legend-swatch:nth-of-type(2) { background:#d5eadc; }
+    .legend-swatch:nth-of-type(3) { background:#a9d4b8; }
+    .legend-swatch:nth-of-type(4) { background:#73b78b; }
+    .legend-swatch:nth-of-type(5) { background:#2f7d52; }
     .act-item { display:flex; align-items:center; gap:10px; padding:8px 0; }
     .act-item + .act-item { border-top:1px solid var(--line); }
     .act-label { width:68px; flex:none; font-size:13px; font-weight:700; }
@@ -98,7 +120,7 @@
     .danger { margin-top:30px; text-align:center; }
     .danger button { border:0; color:#a4acb8; background:none; font-size:12px; text-decoration:underline; cursor:pointer; }
     @media (max-width:700px) { .form-row { grid-template-columns:1fr 1fr; } .btn-add { width:100%; } .stats { grid-template-columns:1fr 1fr; } .topbar { padding-inline:14px; } }
-    @media (max-width:430px) { .auth-actions,.form-row { grid-template-columns:1fr; } .auth-card { padding:22px; } .wrap { padding-inline:13px; } .log-item { flex-wrap:wrap; } .delete-entry { margin-left:auto; } }
+    @media (max-width:430px) { .auth-actions,.form-row { grid-template-columns:1fr; } .auth-card { padding:22px; } .wrap { padding-inline:13px; } .log-item { flex-wrap:wrap; } .delete-entry { margin-left:auto; } .heatmap-weekdays,.heatmap-grid { gap:4px; } .heat-day { min-height:48px; padding:5px; border-radius:6px; } .heat-min { right:5px; bottom:4px; font-size:9px; } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; } }
   </style>
 </head>
@@ -144,6 +166,7 @@
           <div class="quick" aria-label="快捷分钟数"></div><p class="entry-message" role="status" aria-live="polite"></p>
         </div>
         <div class="stats"><div class="stat"><div class="v stDays">0</div><div class="k">学习天数</div></div><div class="stat"><div class="v stAvg">0</div><div class="k">日均分钟</div></div><div class="stat"><div class="v stStreak">0</div><div class="k">连续天数</div></div><div class="stat"><div class="v stEta">—</div><div class="k">预计完成日</div></div></div>
+        <section class="heatmap-section"><div class="section-heading"><h2>本月学习热力图</h2><span class="summary heatmap-summary"></span></div><div class="section-card heatmap-card"><div class="heatmap-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="heatmap-grid" role="grid"></div><div class="heat-legend" aria-label="颜色越深表示学习时间越长"><span>少</span><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><span>多</span></div></div></section>
         <section><h2>项目时间分布</h2><div class="section-card actList"></div></section>
         <section><h2>推荐每日时间分配（合计 45 分钟；忙时只保 ★ 项）</h2><div class="section-card"><table><thead><tr><th>项目</th><th>时长</th><th>做什么</th></tr></thead><tbody><tr><td>精听 ★</td><td>15–20 分钟</td><td>盲听 → 逐句 → 对文本标记 → 跟读<span class="note">毕业标准：盲听一遍懂约 95%</span></td></tr><tr><td>泛听</td><td>10 分钟</td><td>听已经精听过或正在精听的材料，只抓大意</td></tr><tr><td>阅读</td><td>10 分钟</td><td>约 925L 短新闻；第一遍不查词，第二遍处理关键障碍词</td></tr><tr><td>复述 ★</td><td>5 分钟</td><td>合上材料用英语复述 3–5 句</td></tr><tr><td>Anki</td><td>5 分钟</td><td>使用提取卡片说出句子，而不是只认单词</td></tr></tbody></table></div></section>
         <section><h2>里程碑验收</h2><div class="msList"></div></section>
@@ -165,6 +188,7 @@
           <div class="quick" aria-label="快捷分钟数"></div><p class="entry-message" role="status" aria-live="polite"></p>
         </div>
         <div class="stats"><div class="stat"><div class="v stDays">0</div><div class="k">学习天数</div></div><div class="stat"><div class="v stAvg">0</div><div class="k">日均分钟</div></div><div class="stat"><div class="v stStreak">0</div><div class="k">连续天数</div></div><div class="stat"><div class="v stEta">—</div><div class="k">预计完成日</div></div></div>
+        <section class="heatmap-section"><div class="section-heading"><h2>本月学习热力图</h2><span class="summary heatmap-summary"></span></div><div class="section-card heatmap-card"><div class="heatmap-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="heatmap-grid" role="grid"></div><div class="heat-legend" aria-label="颜色越深表示学习时间越长"><span>少</span><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><i class="legend-swatch"></i><span>多</span></div></div></section>
         <section><h2>项目时间分布</h2><div class="section-card actList"></div></section>
         <section class="why"><h2>为什么是 800 小时</h2><div class="section-card"><p>800 小时是基于当前水平和目标设定的可执行估算，不是“投入即必然流利”的保证。听力与口语需要长期接触真实语流。</p><p>日语现阶段是副项，建议每天 15–30 分钟保持频率；英语达到舒适区后再提速。</p></div></section>
         <section><h2>推荐每日时间分配（合计 15–30 分钟；忙时只保 ★ 项）</h2><div class="section-card"><table><thead><tr><th>项目</th><th>时长</th><th>做什么</th></tr></thead><tbody><tr><td>影视精听 ★</td><td>10–15 分钟</td><td>盲听 → 逐句 → 对日文字幕 → 跟读</td></tr><tr><td>台词跟读 ★</td><td>5 分钟</td><td>模仿精听片段，把地道表达搬进口语</td></tr><tr><td>复述</td><td>5 分钟</td><td>用日语复述 3–5 句剧情</td></tr><tr><td>泛听</td><td>5–10 分钟</td><td>用影视或播客维持每日接触</td></tr></tbody></table></div></section>
@@ -197,6 +221,18 @@
     function requireOnline(messageElement) { if (navigator.onLine) return true; setMessage(messageElement,"当前离线，联网后才能操作。",true); return false; }
     function activityLabel(lang,id) { const item=PAGES[lang].activities.find(a=>a.id===id); return item?item.label:"未分类"; }
     function streak(lang) { const days=new Set(entries.filter(e=>e.language===lang).map(e=>e.date)); let date=new Date(),count=0; if(!days.has(localDate(date))) date.setDate(date.getDate()-1); while(days.has(localDate(date))){count++;date.setDate(date.getDate()-1);} return count; }
+    function heatLevel(minutes) { if(minutes<=0)return 0;if(minutes<15)return 1;if(minutes<30)return 2;if(minutes<60)return 3;return 4; }
+    function renderHeatmap(lang,now=new Date()) {
+      const page=document.getElementById("page-"+lang),grid=page.querySelector(".heatmap-grid"),summary=page.querySelector(".heatmap-summary");
+      const year=now.getFullYear(),month=now.getMonth(),monthPrefix=`${year}-${String(month+1).padStart(2,"0")}-`,today=localDate(now);
+      const minutesByDay=new Map();entries.filter(e=>e.language===lang&&e.date.startsWith(monthPrefix)).forEach(e=>minutesByDay.set(e.date,(minutesByDay.get(e.date)||0)+e.minutes));
+      const activeDays=[...minutesByDay.values()].filter(minutes=>minutes>0).length,totalMinutes=[...minutesByDay.values()].reduce((sum,minutes)=>sum+minutes,0);
+      summary.textContent=`${month+1} 月 · ${activeDays} 天 · ${totalMinutes} 分钟`;
+      grid.setAttribute("aria-label",`${year} 年 ${month+1} 月学习记录`);grid.replaceChildren();
+      const leading=(new Date(year,month,1).getDay()+6)%7,daysInMonth=new Date(year,month+1,0).getDate();
+      for(let index=0;index<leading;index++){const blank=document.createElement("span");blank.className="heat-day blank";blank.setAttribute("aria-hidden","true");grid.append(blank);}
+      for(let day=1;day<=daysInMonth;day++){const date=`${monthPrefix}${String(day).padStart(2,"0")}`,minutes=minutesByDay.get(date)||0,cell=document.createElement("div");cell.className=`heat-day level-${heatLevel(minutes)}`+(date===today?" today":"")+(date>today?" future":"");cell.setAttribute("role","gridcell");cell.setAttribute("aria-label",`${year} 年 ${month+1} 月 ${day} 日，学习 ${minutes} 分钟`);cell.title=`${month+1} 月 ${day} 日 · ${minutes} 分钟`;const dateLabel=document.createElement("span");dateLabel.className="heat-date";dateLabel.textContent=day;cell.append(dateLabel);if(minutes){const minuteLabel=document.createElement("span");minuteLabel.className="heat-min";minuteLabel.textContent=minutes+"m";cell.append(minuteLabel);}grid.append(cell);}
+    }
     function renderPage(lang) {
       const cfg=PAGES[lang],page=document.getElementById("page-"+lang),mine=entries.filter(e=>e.language===lang);
       const done=mine.reduce((sum,e)=>sum+e.minutes,0),remain=Math.max(0,cfg.totalMin-done),pct=Math.min(100,done/cfg.totalMin*100);
@@ -212,6 +248,7 @@
       const totals=new Map(cfg.activities.map(a=>[a.id,0])); let uncategorized=0; mine.forEach(e=>totals.has(e.activity)?totals.set(e.activity,totals.get(e.activity)+e.minutes):uncategorized+=e.minutes);
       const actList=page.querySelector(".actList");actList.replaceChildren(); [...cfg.activities,{id:"uncategorized",label:"未分类"}].forEach(a=>{const mins=a.id==="uncategorized"?uncategorized:totals.get(a.id);if(a.id==="uncategorized"&&!mins)return;const share=done?mins/done*100:0,row=document.createElement("div");row.className="act-item";row.innerHTML='<div class="act-label"></div><div class="mini-bar"><div class="mini-fill"></div></div><div class="act-hours"></div><div class="act-pct"></div>';row.children[0].textContent=a.label;row.querySelector(".mini-fill").style.width=share+"%";row.children[2].textContent=fmtHours(mins)+"h";row.children[3].textContent=Math.round(share)+"%";actList.append(row);});
       const logList=page.querySelector(".logList");logList.replaceChildren(); const sorted=[...mine].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt)); if(!sorted.length){const empty=document.createElement("div");empty.className="empty";empty.textContent="还没有记录，今天学 5 分钟也算入账。";logList.append(empty);} else sorted.slice(0,30).forEach(e=>{const row=document.createElement("div");row.className="log-item";const date=document.createElement("span");date.textContent=e.date;const min=document.createElement("span");min.className="log-min";min.textContent=e.minutes+" 分钟";const act=document.createElement("span");act.className="log-activity";act.textContent=activityLabel(lang,e.activity);const del=document.createElement("button");del.type="button";del.className="delete-entry";del.dataset.id=e.id;del.setAttribute("aria-label",`删除 ${e.date} 的 ${e.minutes} 分钟记录`);del.textContent="×";row.append(date,min,act,del);logList.append(row);});
+      renderHeatmap(lang);
     }
     function render() { renderPage("en");renderPage("ja"); }
     function mapRow(row) { return {id:row.id,date:row.study_date,language:row.language==="jp"?"ja":row.language,activity:row.activity,minutes:Number(row.minutes),createdAt:row.created_at}; }
