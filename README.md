@@ -231,7 +231,7 @@
 - 前端仅包含 Supabase 的公开项目 URL 和 publishable key；这类浏览器端标识符不是数据库管理密钥。
 - `study_entries` 已启用 Row Level Security（RLS）。登录用户只能读取、创建、修改和删除 `user_id` 等于自己的记录；匿名请求看不到记录，也无法写入。
 - 数据库密码、secret/service-role key 等管理凭据不得写入前端、Git 仓库或 Vercel 构建配置。
-- 表结构和 RLS 策略保存在 `supabase/migrations/`：`study_entries` 保存学习记录，`milestone_checks` 保存人工验收状态。
+- 表结构和 RLS 策略保存在 `supabase/migrations/`：`study_entries` 保存学习记录，`milestone_checks` 保存人工验收状态。`20260809_normalize_study_entries_rls.sql` 负责清理早期控制台创建的旧策略名称，并统一撤销匿名表权限。
 
 第一次使用：打开线上网站，点击“注册账号”，按确认邮件完成邮箱验证，再回到网站登录。之后同一账号可在不同设备使用。若注册时 Supabase 返回了即时会话，网站会直接进入已登录状态。
 
@@ -251,6 +251,7 @@ python3 -m http.server 4173
 
 ```bash
 node tests/domain.test.js
+node tests/migrations.test.js
 ```
 
 修改后还应执行脚本语法检查，并在真实浏览器完成“注册/登录 → 切换语言 → 入账 → 刷新 → 删除 → 里程碑验收 → 筛选/导出 → 退出”的验证。后续开发应继续以本 README 的产品目标和验收清单为准；具体工程规范见 [AGENTS.md](./AGENTS.md)。
