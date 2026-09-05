@@ -1,7 +1,7 @@
 "use strict";
 
-const SUPABASE_URL = "https://jheszxzhheoocycrpihu.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_h9cYyP8VS_U-5U6_HEhTXA_VOdV8OnJ";
+const SUPABASE_URL = "https://lqjjzcuptepzfbeuegba.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_IIYCJooY-Fkk2oEvWl6xPA_g0vl6S3h";
 const LEGACY_KEYS = ["lang_countdown_v2", "en500h_v1"];
 const SERIES = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)", "var(--series-5)"];
 const D = window.StudyDomain;
@@ -191,7 +191,7 @@ function buildLanguagePages() {
         </div>
       </section>
 
-      <section class="section"><div class="panel data-panel"><div><strong>数据管理</strong><p>导出包含两个语言的学习记录与里程碑验收状态。</p></div><div class="data-buttons"><button class="small-button export-json" type="button">导出 JSON</button><button class="small-button export-csv" type="button">导出 CSV</button><button class="small-button danger-button clear-data" type="button">清空云端数据</button></div></div></section>
+      <section class="section"><div class="panel data-panel"><div><strong>数据管理</strong><p>JSON 可完整备份和恢复；重复导入会自动跳过同一笔记录。</p></div><div class="data-buttons"><button class="small-button export-json" type="button">导出 JSON</button><button class="small-button import-json" type="button">导入 JSON</button><input class="import-json-input hidden" type="file" accept="application/json,.json"><button class="small-button export-csv" type="button">导出 CSV</button><button class="small-button danger-button clear-data" type="button">清空云端数据</button></div></div></section>
     `;
 
     const activitySelect = article.querySelector(".entry-activity");
@@ -260,6 +260,8 @@ function bindPageEvents(language, page) {
     renderRecords(language);
   });
   page.querySelector(".export-json").addEventListener("click", exportJson);
+  page.querySelector(".import-json").addEventListener("click", () => page.querySelector(".import-json-input").click());
+  page.querySelector(".import-json-input").addEventListener("change", (event) => importJsonBackup(event.target));
   page.querySelector(".export-csv").addEventListener("click", exportCsv);
   page.querySelector(".clear-data").addEventListener("click", clearCloudData);
 }
@@ -575,7 +577,7 @@ function renderRecords(language) {
 }
 
 function mapEntryRow(row) {
-  return { id: row.id, date: row.study_date, language: row.language === "jp" ? "ja" : row.language, activity: row.activity, minutes: Number(row.minutes), createdAt: row.created_at };
+  return { id: row.id, clientRef: row.client_ref || row.id, date: row.study_date, language: row.language === "jp" ? "ja" : row.language, activity: row.activity, minutes: Number(row.minutes), createdAt: row.created_at };
 }
 
 function mapCheckRow(row) {
@@ -584,7 +586,7 @@ function mapCheckRow(row) {
 
 async function loadCloudData() {
   const [entryResult, checkResult] = await Promise.all([
-    cloud.from("study_entries").select("id,study_date,language,activity,minutes,created_at").order("study_date", { ascending: false }).order("created_at", { ascending: false }),
+    cloud.from("study_entries").select("id,client_ref,study_date,language,activity,minutes,created_at").order("study_date", { ascending: false }).order("created_at", { ascending: false }),
     cloud.from("milestone_checks").select("language,milestone_hours,verified_at"),
   ]);
   if (entryResult.error) throw entryResult.error;
@@ -663,7 +665,7 @@ async function addEntry(language) {
   setMessage(message, "正在写入云端…");
   const id = crypto.randomUUID();
   try {
-    const { data, error } = await cloud.from("study_entries").insert({ id, user_id: session.user.id, client_ref: id, study_date: date, language, activity, minutes }).select("id,study_date,language,activity,minutes,created_at").single();
+    const { data, error } = await cloud.from("study_entries").insert({ id, user_id: session.user.id, client_ref: id, study_date: date, language, activity, minutes }).select("id,client_ref,study_date,language,activity,minutes,created_at").single();
     if (error) throw error;
     entries.push(mapEntryRow(data));
     renderAll();
@@ -728,6 +730,48 @@ function exportJson() {
   const payload = { version: 1, exportedAt: new Date().toISOString(), entries, milestoneChecks };
   downloadBlob(JSON.stringify(payload, null, 2), "application/json;charset=utf-8", `500hours-${D.localDate()}-backup.json`);
   showToast("JSON 备份已导出。");
+}
+
+async function importJsonBackup(input) {
+  const file = input.files && input.files[0];
+  if (!file || !requireOnline()) return;
+  try {
+    const backup = D.normalizeBackup(JSON.parse(await file.text()));
+    const batchSize = 500;
+    for (let offset = 0; offset < backup.entries.length; offset += batchSize) {
+      const payload = backup.entries.slice(offset, offset + batchSize).map((entry) => ({
+        user_id: session.user.id,
+        client_ref: entry.clientRef,
+        study_date: entry.date,
+        language: entry.language,
+        activity: entry.activity,
+        minutes: entry.minutes,
+        created_at: entry.createdAt,
+      }));
+      const { error } = await cloud.from("study_entries").upsert(payload, { onConflict: "user_id,client_ref", ignoreDuplicates: true });
+      if (error) throw error;
+    }
+    if (backup.milestoneChecks.length) {
+      const payload = backup.milestoneChecks.map((check) => ({
+        user_id: session.user.id,
+        language: check.language,
+        milestone_hours: check.hours,
+        verified_at: check.verifiedAt,
+      }));
+      const { error } = await cloud.from("milestone_checks").upsert(payload, { onConflict: "user_id,language,milestone_hours" });
+      if (error) throw error;
+    }
+    const cloudData = await loadCloudData();
+    entries = cloudData.entries;
+    milestoneChecks = cloudData.checks;
+    renderAll();
+    showToast(`备份已合并：${backup.entries.length} 条记录，${backup.milestoneChecks.length} 个里程碑状态。`);
+  } catch (error) {
+    const message = error instanceof SyntaxError ? "备份文件不是有效的 JSON。" : friendlyError(error);
+    showToast(message, true);
+  } finally {
+    input.value = "";
+  }
 }
 
 function csvCell(value) {

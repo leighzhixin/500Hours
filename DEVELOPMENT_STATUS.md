@@ -1,10 +1,10 @@
 # 500Hours 网站开发进度与状态
 
-更新时间：2026-08-18
+更新时间：2026-09-05
 
 ## 一句话结论
 
-500Hours 当前是一个已经可以使用和验收的在线语言学习有效时间累计器：英语与日语独立分账，学习记录和里程碑状态保存于 Supabase，网站部署在 Vercel，生产站点和本地版本均已完成核心流程验证。
+500Hours 的 Supabase 后端已于 2026-09-05 在 Free 计划中重建：英语与日语独立分账，学习记录和里程碑状态保存于 Supabase，网站部署在 Vercel。仓库同时保存数据库 migrations、恢复手册和 JSON 导入能力。
 
 生产站点：[https://500-hours-delta.vercel.app/](https://500-hours-delta.vercel.app/)
 
@@ -13,9 +13,7 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 ## 当前版本
 
 - Git 分支：`main`
-- 最新提交：`71bd58e Normalize study entry RLS policies`
-- 远端状态：`origin/main` 与本地一致
-- 工作区：干净，无未提交改动
+- 最新变更：重建 Supabase Free 项目并增加 JSON 灾难恢复能力
 - 部署方式：GitHub `main` 推送后由现有 Vercel 项目自动部署
 - 技术栈：静态 HTML / CSS / JavaScript + Supabase Auth / Postgres
 - 运行方式：必须联网；没有离线待同步队列
@@ -76,6 +74,7 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - 登录后修改密码，要求新密码至少 8 位。
 - 最近记录按月份和训练项目筛选。
 - 导出 JSON 备份：学习记录 + 里程碑状态。
+- 导入 JSON 备份：先校验结构，再按稳定来源标识幂等合并，重复导入不重复创建记录。
 - 导出 CSV：便于表格查看学习记录。
 - 首次登录兼容旧版 `en500h_v1` 与 `lang_countdown_v2` 本地数据，并通过账号标记避免重复迁移。
 
@@ -110,6 +109,14 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - `supabase/migrations/20260809_create_milestone_checks.sql`
 - `supabase/migrations/20260809_normalize_study_entries_rls.sql`
 
+当前 Supabase 项目：
+
+- 名称：`500Hours`
+- ref：`lqjjzcuptepzfbeuegba`
+- 区域：`ap-southeast-1`
+- 计划：Free（0 美元/月）
+- 灾难恢复手册：`supabase/RESTORE.md`
+
 两张表均满足：
 
 - 已启用 Row Level Security。
@@ -118,14 +125,13 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - 匿名角色无表权限。
 - `study_entries` 和 `milestone_checks` 均授予 authenticated 角色所需的最小 CRUD 权限。
 
-最后一次端到端验证结果：
+2026-09-05 新项目验证结果：
 
 - 匿名 REST 读取两张表：`401`。
-- 匿名写入：`401`。
-- 登录用户伪造其他 `user_id` 写入：被 `42501` 拒绝。
-- `minutes = 601`：被数据库约束 `23514` 拒绝。
-- `milestone_hours = 0`：被数据库约束 `23514` 拒绝。
-- 登录用户只能读取自己的记录。
+- 两张表均启用 RLS，各有 4 条账号隔离策略。
+- Supabase Security Advisor：无告警。
+- Auth 设置接口：`200`，Email 登录已启用，注册未禁用，邮箱确认已启用。
+- 本地页面可连接新 Auth 服务；无效测试凭据返回“邮箱或密码不正确”，不再出现网络失败。
 
 ### 已发现并修复的问题
 
@@ -141,9 +147,9 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - 撤销 anon 权限。
 - 重新授予 authenticated 最小 CRUD 权限。
 
-## 已完成的验证
+## 历史完整流程验证
 
-使用临时测试账号完成了本地和生产站的完整流程：
+旧 Supabase 项目曾使用临时测试账号完成以下本地和生产流程；2026-09-05 重建后仍需在新项目用真实确认邮件再走一遍：
 
 1. 前端注册。
 2. Supabase 后台确认测试账号。
@@ -194,7 +200,6 @@ git diff --check
 这些内容不是当前 MVP 的阻塞项：
 
 - PWA 安装和离线使用。
-- 数据导入（目前只有导出）。
 - 每周复盘和历史快照。
 - Anki 导出或词卡管理。
 - 音频、transcript 和精听标注工具。

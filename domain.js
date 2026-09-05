@@ -147,6 +147,41 @@
     return (new Date(date.getFullYear(), date.getMonth(), 1).getDay() + 6) % 7;
   }
 
+  function normalizeBackup(payload) {
+    if (!payload || typeof payload !== "object" || payload.version !== 1 || !Array.isArray(payload.entries) || !Array.isArray(payload.milestoneChecks)) {
+      throw new Error("备份文件结构不正确。请选择网站导出的 JSON 备份。");
+    }
+    const entryIds = new Set();
+    const clientRefs = new Set();
+    const normalizedEntries = payload.entries.map((entry, index) => {
+      const language = entry && entry.language === "jp" ? "ja" : entry && entry.language;
+      const id = entry && typeof entry.id === "string" ? entry.id.trim() : "";
+      const clientRef = entry && typeof entry.clientRef === "string" ? entry.clientRef.trim() : "backup-" + id;
+      const activity = entry && typeof entry.activity === "string" ? entry.activity.trim() : "";
+      const minutes = Number(entry && entry.minutes);
+      const createdAt = entry && entry.createdAt;
+      if (!id || id.length > 200 || !clientRef || clientRef.length > 200 || entryIds.has(id) || clientRefs.has(clientRef) || !parseLocalDate(entry && entry.date) || !["en", "ja"].includes(language) || !activity || activity.length > 100 || !Number.isInteger(minutes) || minutes < 1 || minutes > 600 || typeof createdAt !== "string" || Number.isNaN(Date.parse(createdAt))) {
+        throw new Error(`备份中的第 ${index + 1} 条学习记录无效。`);
+      }
+      entryIds.add(id);
+      clientRefs.add(clientRef);
+      return { id, clientRef, date: entry.date, language, activity, minutes, createdAt };
+    });
+    const checkKeys = new Set();
+    const normalizedChecks = payload.milestoneChecks.map((check, index) => {
+      const language = check && check.language === "jp" ? "ja" : check && check.language;
+      const hours = Number(check && check.hours);
+      const verifiedAt = check && check.verifiedAt;
+      const key = language + ":" + hours;
+      if (!["en", "ja"].includes(language) || !Number.isInteger(hours) || hours < 1 || checkKeys.has(key) || typeof verifiedAt !== "string" || Number.isNaN(Date.parse(verifiedAt))) {
+        throw new Error(`备份中的第 ${index + 1} 个里程碑状态无效。`);
+      }
+      checkKeys.add(key);
+      return { language, hours, verifiedAt };
+    });
+    return { entries: normalizedEntries, milestoneChecks: normalizedChecks };
+  }
+
   return {
     localDate,
     parseLocalDate,
@@ -165,5 +200,6 @@
     monthReview,
     daysInMonth,
     leadingMondayCells,
+    normalizeBackup,
   };
 });

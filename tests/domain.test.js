@@ -47,4 +47,14 @@ assert.equal(domain.heatLevel(15), 2);
 assert.equal(domain.heatLevel(30), 3);
 assert.equal(domain.heatLevel(60), 4);
 
+const backup = domain.normalizeBackup({
+  version: 1,
+  entries: [{ id: "entry-1", date: "2026-08-09", language: "jp", activity: "retell", minutes: 25, createdAt: "2026-08-09T12:00:00.000Z" }],
+  milestoneChecks: [{ language: "en", hours: 100, verifiedAt: "2026-08-09T13:00:00.000Z" }],
+});
+assert.equal(backup.entries[0].language, "ja", "backup import normalizes legacy jp language values");
+assert.equal(backup.entries[0].clientRef, "backup-entry-1", "older backups receive a stable import reference");
+assert.throws(() => domain.normalizeBackup({ version: 1, entries: [{ id: "bad", date: "2026-08-09", language: "en", activity: "reading", minutes: 0, createdAt: "2026-08-09T12:00:00.000Z" }], milestoneChecks: [] }), /学习记录无效/, "backup import rejects invalid minutes");
+assert.throws(() => domain.normalizeBackup({ version: 1, entries: [], milestoneChecks: [{ language: "en", hours: 100, verifiedAt: "invalid" }] }), /里程碑状态无效/, "backup import rejects invalid milestone timestamps");
+
 console.log("domain tests passed");
