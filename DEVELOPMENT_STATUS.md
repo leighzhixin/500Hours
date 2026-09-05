@@ -116,6 +116,8 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - 区域：`ap-southeast-1`
 - 计划：Free（0 美元/月）
 - 灾难恢复手册：`supabase/RESTORE.md`
+- Auth Site URL：`https://500-hours-delta.vercel.app`
+- Auth Redirect URLs：生产站与 `http://localhost:4173/**`
 
 两张表均满足：
 
@@ -131,7 +133,7 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 - 两张表均启用 RLS，各有 4 条账号隔离策略。
 - Supabase Security Advisor：无告警。
 - Auth 设置接口：`200`，Email 登录已启用，注册未禁用，邮箱确认已启用。
-- 本地页面可连接新 Auth 服务；无效测试凭据返回“邮箱或密码不正确”，不再出现网络失败。
+- 本地与生产页面均可连接新 Auth 服务；无效测试凭据返回“邮箱或密码不正确”，不再出现网络失败。
 
 ### 已发现并修复的问题
 
@@ -149,7 +151,7 @@ GitHub 仓库：[https://github.com/leighzhixin/500Hours](https://github.com/lei
 
 ## 历史完整流程验证
 
-旧 Supabase 项目曾使用临时测试账号完成以下本地和生产流程；2026-09-05 重建后仍需在新项目用真实确认邮件再走一遍：
+旧 Supabase 项目曾使用临时测试账号完成以下本地和生产流程；2026-09-05 重建后仍需在新项目用真实确认邮件再走一遍账号与数据写入流程：
 
 1. 前端注册。
 2. Supabase 后台确认测试账号。
